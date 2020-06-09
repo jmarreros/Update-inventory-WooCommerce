@@ -58,10 +58,11 @@ foreach ($items_origin as $item) {
         $data_update = [
             'stock_quantity' => $quantity,
             'price' => $price,
+            'regular_price'=> $price
         ];
 
         // Enviamos producto y datos
-        $result = $woocommerce->put('products/'.$id_product, $data_update);
+        $result = $woocommerce->post('products/'.$id_product, $data_update);
 
         if (! $result) {
             echo("❗Error al actualizar producto \n");
