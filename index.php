@@ -35,7 +35,7 @@ if ( ! $items_origin ) {
 // ===================
 
 
-// Recorremos datos devueltos del origen y obtenemos los IDs
+// Obtenemos datos de la API de origen
 $items_origin = json_decode($items_origin, true);
 
 // formamos el parámetro de lista de SKUs a actualizar
