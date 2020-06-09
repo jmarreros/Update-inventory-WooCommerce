@@ -1,0 +1,7 @@
+{
+  "inventory": [
+    { "sku": "P101", "qty": 10, "name": "Pedigree Vital", "price": "17" },
+    { "sku": "P102", "qty": 20, "name": "Formula Healty", "price": "19" },
+    { "sku": "P105", "qty": 30, "name": "Puerco para perro", "price": "20.5" }
+  ]
+}

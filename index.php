@@ -25,51 +25,60 @@ $ch = curl_init();
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_URL,$url_API);
 
-
+echo "➜ Obteniendo datos origen ... \n";
 $items_origin = curl_exec($ch);
 curl_close($ch);
 
 if ( ! $items_origin ) {
-    exit('Error en API origen');
+    exit('❗Error en API origen');
 }
 // ===================
 
 
-// Recorremos datos devueltos del origen
-$items_origin = json_decode($items_origin);
+// Recorremos datos devueltos del origen y obtenemos los IDs
+$items_origin = json_decode($items_origin, true);
 
-foreach ($items_origin as $item) {
-    // Recuperarmos los valores de sku, cantidad y precio de la API de origen
-    $sku = $item->sku;
-    $quantity = $item->qty;
-    $price = $item->regular_price;
+// formamos el parámetro de lista de SKUs a actualizar
+$param_sku ='';
+foreach ($items_origin as $item){
+    $param_sku .= $item['sku'] . ',';
+}
 
-    echo "Producto ".$sku." ... ";
+echo "➜ Obteniendo los ids de los productos... \n";
+// Obtenemos todos los productos de la lista de SKUs
+$products = $woocommerce->get('products/?sku='. $param_sku);
 
-    // Obtenemos el producto basado en el SKU
-    $product = $woocommerce->get('products/?sku='.$sku);
+// Construimos la data en base a los productos recuperados
+$item_data = [];
+foreach($products as $product){
 
-    if ( $product ){
+    // Filtramos el array de origen por sku
+    $sku = $product->sku;
+    $search_item = array_filter($items_origin, function($item) use($sku) {
+        return $item['sku'] == $sku;
+    });
+    $search_item = reset($search_item);
 
-        // Obtenemos el id del producto
-        $id_product = $product[0]->id;
-
-        //Formamos los datos a actualizar
-        $data_update = [
-            'stock_quantity' => $quantity,
-            'price' => $price,
-            'regular_price'=> $price
-        ];
-
-        // Enviamos producto y datos
-        $result = $woocommerce->post('products/'.$id_product, $data_update);
-
-        if (! $result) {
-            echo("❗Error al actualizar producto \n");
-        } else {
-            print("✔ Producto actualizado \n");
-        }
-    }
+    // Formamos el array a actualizar
+    $item_data[] = [
+        'id' => $product->id,
+        'regular_price' => $search_item['price'],
+        'stock_quantity' => $search_item['qty'],
+    ];
 
 }
 
+// Construimos información a actualizar en lotes
+$data = [
+    'update' => $item_data,
+];
+
+echo "➜ Actualización en lote ... \n";
+// Actualización en lotes
+$result = $woocommerce->post('products/batch', $data);
+
+if (! $result) {
+    echo("❗Error al actualizar productos \n");
+} else {
+    print("✔ Productos actualizados correctamente \n");
+}
